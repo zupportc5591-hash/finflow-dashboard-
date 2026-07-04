@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Brand accents */
+  --color-brand-blue: #60a5fa; /* Lighter blue for dark mode */
+  --color-brand-yellow: #fbbf24; /* Lighter gold for dark mode */
+  
+  /* Text and background */
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-bg-app: #0f172a; /* Slate 900 */
+  --color-bg-card: #1e293b; /* Slate 800 */
+  --color-border: #334155; /* Slate 700 */
+  
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--color-bg-app);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+}
