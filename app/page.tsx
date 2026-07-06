@@ -67,7 +67,7 @@ export default function Home() {
       const monthlyTotal = monthlyFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0);
       setMonthlyAccumulatedAmount(Math.round(monthlyTotal * 100) / 100);
       
-      // MfH Logic (Col X/23 Date, Col AP-AK/41-36)
+      // MfH Logic (Col X/23 Date, Col AP/41)
       const mfhFiltered = allRows.filter((row: any) => {
         if (!row[23] || !String(row[23]).includes('Date(')) return false;
         const match = String(row[23]).match(/Date\((\d+),(\d+),(\d+)\)/);
@@ -75,7 +75,7 @@ export default function Home() {
         const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
         return rowDate >= startRange && rowDate <= endRange;
       });
-      const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[41]) || 0) - (parseFloat(row[36]) || 0), 0);
+      const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[41]) || 0), 0);
       setMoneyForHeartAmount(Math.round(mfhTotal * 100) / 100);
 
       // Pending MfH Logic (Col M/12 Date, Col X/23 NOT Date, Sum AP/41 or AQ/42, Exclude JAI2603026)
@@ -194,7 +194,7 @@ if (dates.M.date) {
               type="date" 
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-bg-card text-text-main border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+              className="bg-bg-card text-text-main border border-border rounded-xl px-6 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-brand-blue w-full md:w-auto"
             />
           </div>
         </header>
@@ -224,7 +224,7 @@ if (dates.M.date) {
                 <SummaryCard title="ยอดเงินที่ปิดวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
                 <SummaryCard title="ปิดสะสมในเดือน (เคส)" value={monthlyAccumulatedCases.toString()} />
                 <SummaryCard title="ปิดสะสมในเดือน (ยอดเงิน)" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
-                <SummaryCard title="จำนวนเงินสะสม (เงินให้ใจ)" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
+                <SummaryCard title="รายได้สะสมจากเงินให้ใจ" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
                 <SummaryCard title="เงินค้างรับจากเงินให้ใจ" value={`฿${pendingMoneyForHeartAmount.toLocaleString()}`} />
                 </div>
                 <OverdueTableAdvanced data={overdueCases} />
