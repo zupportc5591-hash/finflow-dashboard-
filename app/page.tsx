@@ -17,6 +17,7 @@ export default function Home() {
   const [moneyForHeartAmount, setMoneyForHeartAmount] = useState(0);
   const [pendingMoneyForHeartAmount, setPendingMoneyForHeartAmount] = useState(0);
   const [overdueCases, setOverdueCases] = useState<any[]>([]);
+  const [historyData, setHistoryData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -28,6 +29,39 @@ export default function Home() {
       
       const allTabsData = await Promise.all(tabs.map(tab => getSheetData(SHEET_ID, tab)));
       const allRows = allTabsData.flat().slice(1); // Assuming first row is header
+
+      // --- NEW: History Data Calculation ---
+      const histData = months.map((month, index) => {
+          const startRange = new Date(current.getFullYear(), index, 26);
+          const endRange = new Date(current.getFullYear(), index + 1, 25);
+          
+          const filtered = allRows.filter((row: any) => {
+            if (!row[12] || !String(row[12]).includes('Date(')) return false;
+            const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
+            if (!match) return false;
+            const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+            return rowDate >= startRange && rowDate <= endRange;
+          });
+
+          // MfH filtered for this range
+          const mfhFiltered = allRows.filter((row: any) => {
+            if (!row[23] || !String(row[23]).includes('Date(')) return false;
+            const match = String(row[23]).match(/Date\((\d+),(\d+),(\d+)\)/);
+            if (!match) return false;
+            const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+            return rowDate >= startRange && rowDate <= endRange;
+          });
+          const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[41]) || 0), 0);
+          
+          return {
+              month,
+              cases: filtered.length,
+              amount: Math.round(filtered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0) * 100) / 100,
+              mfhIncome: Math.round(mfhTotal * 100) / 100
+          };
+      });
+      setHistoryData(histData);
+      // --- END NEW ---
 
       // 1. Daily Calculation (From current tab)
       const currentTabName = `FF${current.toLocaleString('en-US', { month: 'short' })} ${current.getFullYear().toString().slice(-2)}`;
@@ -104,7 +138,6 @@ export default function Home() {
 
       // Overdue Case Logic
       const overdueList: any[] = [];
-      const headers = allTabsData[0][0]; // Assuming headers are the same across tabs, taking from first tab's header row
       
       allRows.forEach((row: any) => {
         if (row[23] || row[0] === 'JAI2603026') return; // Col X must be empty AND ID must not be JAI2603026
@@ -117,10 +150,6 @@ export default function Home() {
           const match = String(val).match(/Date\((\d+),(\d+),(\d+)\)/);
           if (!match) return null;
           return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        };
-
-        const dateColMap: { [key: string]: number } = {
-          M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, T: 19, U: 20, V: 21, W: 22
         };
 
         const dates: { [key: string]: { date: Date | null, colIndex: number } } = {
@@ -143,30 +172,29 @@ export default function Home() {
           V: 'รับเล่มคืนจากขนส่ง',
           W: 'ส่งเล่มให้JAI'
         };
-// Determine latest step and total duration (based on current date)
-let latestDateCol = '';
-let maxDate = new Date(0);
-Object.entries(dates).forEach(([key, val]) => {
-    if (val.date && val.date > maxDate) {
-        maxDate = val.date;
-        latestDateCol = key;
-    }
-});
-const latestStep = stepMap[latestDateCol] || 'ขั้นตอนล่าสุด';
+        
+        let latestDateCol = '';
+        let maxDate = new Date(0);
+        Object.entries(dates).forEach(([key, val]) => {
+            if (val.date && val.date > maxDate) {
+                maxDate = val.date;
+                latestDateCol = key;
+            }
+        });
+        const latestStep = stepMap[latestDateCol] || 'ขั้นตอนล่าสุด';
 
-if (dates.M.date) {
-    const today = new Date();
-    const totalDays = (today.getTime() - dates.M.date.getTime()) / (1000 * 60 * 60 * 24);
-    const limit = productType === 'จำนำ' ? 10 : productType === 'HP' ? 20 : 999;
+        if (dates.M.date) {
+            const today = new Date();
+            const totalDays = (today.getTime() - dates.M.date.getTime()) / (1000 * 60 * 60 * 24);
+            const limit = productType === 'จำนำ' ? 10 : productType === 'HP' ? 20 : 999;
 
-    if (totalDays > limit) {
-       overdueList.push({
-         id: row[0], name: `${row[3]} ${row[4]}`, latestStep, exceededDays: Math.floor(totalDays - limit),
-         dates: Object.fromEntries(Object.entries(dates).filter(([_, v]) => v.date).map(([k, v]) => [k, v.date!.toLocaleDateString()]))
-       });
-    }
-}
-
+            if (totalDays > limit) {
+               overdueList.push({
+                 id: row[0], name: `${row[3]} ${row[4]}`, latestStep, exceededDays: Math.floor(totalDays - limit),
+                 dates: Object.fromEntries(Object.entries(dates).filter(([_, v]) => v.date).map(([k, v]) => [k, v.date!.toLocaleDateString()]))
+               });
+            }
+        }
       });
       setOverdueCases(overdueList);
     }
@@ -237,7 +265,30 @@ if (dates.M.date) {
           )}
 
           {activeTab === 'history' && (
-            <section className="text-center text-text-muted p-12">พื้นที่แสดงข้อมูลย้อนหลัง</section>
+            <section className="mt-8">
+              <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-text-muted border-b border-border">
+                      <th className="p-4 text-left">เดือน</th>
+                      <th className="p-4 text-right">จำนวนเคส</th>
+                      <th className="p-4 text-right">ยอดเงิน (฿)</th>
+                      <th className="p-4 text-right">รายได้เงินให้ใจ (฿)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {historyData.map((item, i) => (
+                      <tr key={i} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4 font-semibold">{item.month}</td>
+                        <td className="p-4 text-right">{item.cases}</td>
+                        <td className="p-4 text-right">{item.amount.toLocaleString()}</td>
+                        <td className="p-4 text-right">{item.mfhIncome.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
         </div>
       </div>
