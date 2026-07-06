@@ -281,8 +281,8 @@ export default function Home() {
                       <tr key={i} className="hover:bg-white/5 transition-colors">
                         <td className="p-4 font-semibold">{item.month}</td>
                         <td className="p-4 text-right">{item.cases}</td>
-                        <td className="p-4 text-right">{item.amount.toLocaleString()}</td>
-                        <td className="p-4 text-right">{item.mfhIncome.toLocaleString()}</td>
+                        <td className="p-4 text-right">{item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="p-4 text-right">{item.mfhIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                   </tbody>
