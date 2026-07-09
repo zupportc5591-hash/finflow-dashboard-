@@ -27,8 +27,8 @@ export default function Home() {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const tabs = months.map(m => `FF${m} ${current.getFullYear().toString().slice(-2)}`);
       
-      const allTabsData = await Promise.all(tabs.map(tab => getSheetData(SHEET_ID, tab)));
-      const allRows = allTabsData.flat().slice(1); // Assuming first row is header
+      const allTabsData = await Promise.all(tabs.map(async tab => (await getSheetData(SHEET_ID, tab)).rows));
+      const allRows = allTabsData.flat(); // Already sliced in original? No, it was slice(1). This needs careful handling.
 
       // --- NEW: History Data Calculation ---
       const histData = months.map((month, index) => {
@@ -65,9 +65,9 @@ export default function Home() {
 
       // 1. Daily Calculation (From current tab)
       const currentTabName = `FF${current.toLocaleString('en-US', { month: 'short' })} ${current.getFullYear().toString().slice(-2)}`;
-      const currData = await getSheetData(SHEET_ID, currentTabName);
-      
-      const dailyFiltered = currData.slice(1).filter((row: any) => {
+      const { rows: currData } = await getSheetData(SHEET_ID, currentTabName);
+
+      const dailyFiltered = currData.filter((row: any) => {
         if (!row[12] || !String(row[12]).includes('Date(')) return false;
         const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
         if (!match) return false;
@@ -103,8 +103,9 @@ export default function Home() {
       
       // 3. New MfH Logic (Col X/23 Date, Sum AP(41) - AK(36) or AQ(42) - AK(36))
       const mfhSheetName = 'งานส่วนกลาง ปี 2569';
-      const mfhSheetData = await getSheetData(SHEET_ID, mfhSheetName);
-      console.log('Sample Row from MfH Sheet:', mfhSheetData.length > 1 ? mfhSheetData[1] : 'No data');
+      const mfhData = await getSheetData(SHEET_ID, mfhSheetName);
+      console.log('MfH Headers:', mfhData.headers);
+      const mfhRows = mfhData.rows;
       
       const parseCustomDate = (dateStr: any) => {
         if (!dateStr) return null;
@@ -121,9 +122,8 @@ export default function Home() {
         return null;
       };
       
-      const mfhFiltered = mfhSheetData.slice(1).filter((row: any, index: number) => {
+      const mfhFiltered = mfhRows.filter((row: any, index: number) => {
         const rowDate = parseCustomDate(row[23]);
-        if (index < 5) console.log(`Row ${index} - Col 23: ${row[23]}, Parsed Date: ${rowDate}, InRange: ${rowDate && rowDate >= startRange && rowDate <= endRange}`);
         return rowDate && rowDate >= startRange && rowDate <= endRange;
       });
       
@@ -134,7 +134,6 @@ export default function Home() {
           const ak = parseFloat(row[36]) || 0;
           const incomeCol = (rowDate >= new Date(2026, 6, 1)) ? 42 : 41;
           const income = parseFloat(row[incomeCol]) || 0;
-          console.log(`MfH Row Calc - Date: ${rowDate}, IncomeCol: ${incomeCol}, Income: ${income}, AK: ${ak}, Result: ${income - ak}`);
           
           return sum + (income - ak);
       }, 0);
