@@ -101,15 +101,23 @@ export default function Home() {
       const monthlyTotal = monthlyFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0);
       setMonthlyAccumulatedAmount(Math.round(monthlyTotal * 100) / 100);
       
-      // MfH Logic (Col X/23 Date, Col AP/41)
-      const mfhFiltered = allRows.filter((row: any) => {
+      // 3. New MfH Logic (Col X/23 Date, Sum AP(41) - AK(36))
+      const mfhSheetName = 'งานส่วนกลาง ปี 2569';
+      const mfhSheetData = await getSheetData(SHEET_ID, mfhSheetName);
+      
+      const mfhFiltered = mfhSheetData.slice(1).filter((row: any) => {
         if (!row[23] || !String(row[23]).includes('Date(')) return false;
         const match = String(row[23]).match(/Date\((\d+),(\d+),(\d+)\)/);
         if (!match) return false;
         const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
         return rowDate >= startRange && rowDate <= endRange;
       });
-      const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[41]) || 0), 0);
+      
+      const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => {
+          const ap = parseFloat(row[41]) || 0;
+          const ak = parseFloat(row[36]) || 0;
+          return sum + (ap - ak);
+      }, 0);
       setMoneyForHeartAmount(Math.round(mfhTotal * 100) / 100);
 
       // Pending MfH Logic (Col M/12 Date, Col X/23 NOT Date, Sum AP/41 or AQ/42, Exclude JAI2603026)
