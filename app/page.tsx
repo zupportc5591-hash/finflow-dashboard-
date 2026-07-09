@@ -114,9 +114,17 @@ export default function Home() {
       });
       
       const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => {
-          const ap = parseFloat(row[41]) || 0;
+          const rowDateStr = String(row[23]);
+          const match = rowDateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+          if (!match) return sum;
+          const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+          
           const ak = parseFloat(row[36]) || 0;
-          return sum + (ap - ak);
+          // AP(41) before July 2026, AQ(42) from July 2026
+          const incomeCol = (rowDate >= new Date(2026, 6, 1)) ? 42 : 41;
+          const income = parseFloat(row[incomeCol]) || 0;
+          
+          return sum + (income - ak);
       }, 0);
       setMoneyForHeartAmount(Math.round(mfhTotal * 100) / 100);
 
