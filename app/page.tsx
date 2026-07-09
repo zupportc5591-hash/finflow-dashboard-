@@ -104,19 +104,31 @@ export default function Home() {
       // 3. New MfH Logic (Col X/23 Date, Sum AP(41) - AK(36) or AQ(42) - AK(36))
       const mfhSheetData = await getSheetData(SHEET_ID, mfhSheetName);
       
+      const parseCustomDate = (dateStr: any) => {
+        if (!dateStr) return null;
+        // Try parsing 'Date(Y,M,D)' format (if it still exists in some places)
+        const match = String(dateStr).match(/Date\((\d+),(\d+),(\d+)\)/);
+        if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        
+        // Try parsing 'DD/MM/YYYY' format
+        const parts = String(dateStr).split('/');
+        if (parts.length === 3) {
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1; // 0-indexed
+            const year = parseInt(parts[2]);
+            return new Date(year, month, day);
+        }
+        return null;
+      };
+      
       const mfhFiltered = mfhSheetData.slice(1).filter((row: any) => {
-        if (!row[23] || !String(row[23]).includes('Date(')) return false;
-        const match = String(row[23]).match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (!match) return false;
-        const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        return rowDate >= startRange && rowDate <= endRange;
+        const rowDate = parseCustomDate(row[23]);
+        return rowDate && rowDate >= startRange && rowDate <= endRange;
       });
       
       const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => {
-          const rowDateStr = String(row[23]);
-          const match = rowDateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
-          if (!match) return sum;
-          const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+          const rowDate = parseCustomDate(row[23]);
+          if (!rowDate) return sum;
           
           const ak = parseFloat(row[36]) || 0;
           // AP(41) before July 2026, AQ(42) from July 2026
