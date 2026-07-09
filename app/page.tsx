@@ -104,6 +104,7 @@ export default function Home() {
       // 3. New MfH Logic (Col X/23 Date, Sum AP(41) - AK(36) or AQ(42) - AK(36))
       const mfhSheetName = 'งานส่วนกลาง ปี 2569';
       const mfhSheetData = await getSheetData(SHEET_ID, mfhSheetName);
+      console.log('Sample Row from MfH Sheet:', mfhSheetData.length > 1 ? mfhSheetData[1] : 'No data');
       
       const parseCustomDate = (dateStr: any) => {
         if (!dateStr) return null;
