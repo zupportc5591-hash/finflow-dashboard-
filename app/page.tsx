@@ -106,23 +106,22 @@ export default function Home() {
       
       const parseCustomDate = (dateStr: any) => {
         if (!dateStr) return null;
-        // Try parsing 'Date(Y,M,D)' format (if it still exists in some places)
         const match = String(dateStr).match(/Date\((\d+),(\d+),(\d+)\)/);
         if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
         
-        // Try parsing 'DD/MM/YYYY' format
         const parts = String(dateStr).split('/');
         if (parts.length === 3) {
             const day = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1; // 0-indexed
+            const month = parseInt(parts[1]) - 1;
             const year = parseInt(parts[2]);
             return new Date(year, month, day);
         }
         return null;
       };
       
-      const mfhFiltered = mfhSheetData.slice(1).filter((row: any) => {
+      const mfhFiltered = mfhSheetData.slice(1).filter((row: any, index: number) => {
         const rowDate = parseCustomDate(row[23]);
+        if (index < 5) console.log(`Row ${index} - Col 23: ${row[23]}, Parsed Date: ${rowDate}, InRange: ${rowDate && rowDate >= startRange && rowDate <= endRange}`);
         return rowDate && rowDate >= startRange && rowDate <= endRange;
       });
       
@@ -131,9 +130,9 @@ export default function Home() {
           if (!rowDate) return sum;
           
           const ak = parseFloat(row[36]) || 0;
-          // AP(41) before July 2026, AQ(42) from July 2026
           const incomeCol = (rowDate >= new Date(2026, 6, 1)) ? 42 : 41;
           const income = parseFloat(row[incomeCol]) || 0;
+          console.log(`MfH Row Calc - Date: ${rowDate}, IncomeCol: ${incomeCol}, Income: ${income}, AK: ${ak}, Result: ${income - ak}`);
           
           return sum + (income - ak);
       }, 0);
