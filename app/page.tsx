@@ -68,9 +68,12 @@ export default function Home() {
       const currData = await getSheetData(SHEET_ID, currentTabName);
       
       const dailyFiltered = currData.slice(1).filter((row: any) => {
-        if (!row[12] || !String(row[12]).includes('Date(')) return false;
-        const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
+        const colIndex = 12; // Column M
+        if (!row[colIndex] || !String(row[colIndex]).includes('Date(')) return false;
+        
+        const match = String(row[colIndex]).match(/Date\((\d+),(\d+),(\d+)\)/);
         if (!match) return false;
+        
         const normalizedDate = `${match[1]}-${(parseInt(match[2]) + 1).toString().padStart(2, '0')}-${match[3].padStart(2, '0')}`;
         return normalizedDate === selectedDate;
       });

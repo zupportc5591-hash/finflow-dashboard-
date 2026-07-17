@@ -17,7 +17,7 @@ export async function getSheetData(spreadsheetId: string, sheetName: string) {
     
     if (!json.table) {
       console.warn('No table found in sheet');
-      return { headers: [], rows: [] };
+      return [];
     }
     
     const headers = json.table.cols.map((col: any) => col.label);
@@ -25,9 +25,9 @@ export async function getSheetData(spreadsheetId: string, sheetName: string) {
       row.c.map((cell: any) => cell ? cell.v : null)
     );
     
-    return { headers, rows };
+    return [headers, ...rows];
   } catch (error) {
     console.error('Error fetching sheet data:', error);
-    return { headers: [], rows: [] };
+    return [];
   }
 }
