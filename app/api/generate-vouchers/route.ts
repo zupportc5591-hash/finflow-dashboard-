@@ -18,8 +18,8 @@ export async function POST() {
       scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file'],
     });
 
-    const sheets = google.sheets({ version: 'v4', auth });
-    const drive = google.drive({ version: 'v3', auth });
+    const sheets = google.sheets({ version: 'v4', auth: auth as any });
+    const drive = google.drive({ version: 'v3', auth: auth as any });
 
     // 1. Fetch data (simplified fetch of the active month tab)
     // In a real scenario, you might need to iterate through all month tabs
