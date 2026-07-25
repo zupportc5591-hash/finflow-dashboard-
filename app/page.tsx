@@ -278,15 +278,24 @@ export default function Home() {
           {activeTab === 'daily' && (
             <section>
               <div className="mb-4 text-text-muted">ข้อมูลประจำวันที่: <span className="font-bold text-text-main">{selectedDate}</span></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <SummaryCard title="เคสที่ปิดยอดวันนี้" value={dailyCases.toString()} />
-                <SummaryCard title="ยอดเงินที่ปิดวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
-                <SummaryCard title="ยอดค่าใช้จ่ายเพิ่มเติม" value="฿0" />
-                <SummaryCard title="ปิดสะสมในเดือน (เคส)" value={monthlyAccumulatedCases.toString()} />
-                <SummaryCard title="ปิดสะสมในเดือน (ยอดเงิน)" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
-                <SummaryCard title="รายได้สะสมจากเงินให้ใจ" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
-                <SummaryCard title="เงินค้างรับจากเงินให้ใจ" value={`฿${pendingMoneyForHeartAmount.toLocaleString()}`} />
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">สรุปข้อมูลประจำวัน</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
+                  <SummaryCard title="เคสที่ปิดยอดวันนี้" value={dailyCases.toString()} />
+                  <SummaryCard title="ยอดเงินที่ปิดวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
+                  <SummaryCard title="ยอดค่าใช้จ่ายเพิ่มเติม" value="฿0" />
                 </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">ข้อมูลสะสมและอื่น ๆ</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <SummaryCard title="ปิดสะสมในเดือน (เคส)" value={monthlyAccumulatedCases.toString()} />
+                  <SummaryCard title="ปิดสะสมในเดือน (ยอดเงิน)" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
+                  <SummaryCard title="รายได้สะสมจากเงินให้ใจ" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
+                  <SummaryCard title="เงินค้างรับจากเงินให้ใจ" value={`฿${pendingMoneyForHeartAmount.toLocaleString()}`} />
+                </div>
+              </div>
                 <OverdueTableAdvanced data={overdueCases} />
 
             </section>
