@@ -281,6 +281,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <SummaryCard title="เคสที่ปิดยอดวันนี้" value={dailyCases.toString()} />
                 <SummaryCard title="ยอดเงินที่ปิดวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
+                <SummaryCard title="ยอดค่าใช้จ่ายเพิ่มเติม" value="฿0" />
                 <SummaryCard title="ปิดสะสมในเดือน (เคส)" value={monthlyAccumulatedCases.toString()} />
                 <SummaryCard title="ปิดสะสมในเดือน (ยอดเงิน)" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
                 <SummaryCard title="รายได้สะสมจากเงินให้ใจ" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
