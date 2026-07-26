@@ -281,23 +281,26 @@ export default function Home() {
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-text-main mb-4 px-1">สรุปข้อมูลประจำวัน</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
-                  <SummaryCard title="เคสที่ปิดยอดวันนี้" value={dailyCases.toString()} />
-                  <SummaryCard title="ยอดเงินที่ปิดวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
-                  <SummaryCard title="ยอดค่าใช้จ่ายเพิ่มเติม" value="฿0" />
+                  <SummaryCard title="จำนวนเคสปิดวันนี้" value={dailyCases.toString()} />
+                  <SummaryCard title="ยอดปิดวงเงินวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
+                  <SummaryCard title="ยอดเพิ่มเติมวันนี้" value="฿0" />
                 </div>
               </div>
 
               <div className="mb-8">
-                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">สรุปภาพรวมสะสม</h3>
+                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">สรุปข้อมูลสะสม</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
+                  <SummaryCard title="จำนวนเคสปิดวงเงินสะสม" value={monthlyAccumulatedCases.toString()} />
+                  <SummaryCard title="ยอดปิดวงเงินสะสม" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
+                  <SummaryCard title="ยอดเพิ่มเติมสะสม" value="฿0" />
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">ข้อมูลการเงิน</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
                   <SummaryCard title="จำนวนเคสรับเงินวันนี้" value={monthlyAccumulatedCases.toString()} />
                   <SummaryCard title="ยอดเงินรับสะสม" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
-                </div>
-              </div>
-
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-text-main mb-4 px-1">ข้อมูลการเงิน (MfH)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
                   <SummaryCard title="รายได้สะสม" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
                   <SummaryCard title="จำนวนเงินค้างรับ" value={`฿${pendingMoneyForHeartAmount.toLocaleString()}`} />
                 </div>
