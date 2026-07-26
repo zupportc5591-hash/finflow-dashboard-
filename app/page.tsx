@@ -25,9 +25,9 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchData() {
-      const current = new Date(selectedDate);
+      const templateData = (await getSheetData(SHEET_ID, 'Template')).slice(1);
+      const today = new Date(selectedDate);
       
-      // Helper: Parse 'Date(y,m,d)' string
       const parseSheetDate = (dateStr: any) => {
         if (!dateStr || typeof dateStr !== 'string') return null;
         const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
@@ -35,15 +35,6 @@ export default function Home() {
         return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
       };
 
-      const today = new Date(selectedDate);
-      const startOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
-      const endOfMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-
-      // 1. Fetch data
-      const templateData = (await getSheetData(SHEET_ID, 'Template')).slice(1);
-      const dashboardData = (await getSheetData(SHEET_ID, 'Dashboard')).slice(1);
-
-      // 2. Calculate 'จำนวนเคสปิดวันนี้' (Tab 'Template', Col Q Date, Index 16)
       const dailyCasesCount = templateData.reduce((count: number, row: any) => {
         const rowDate = parseSheetDate(row[16]); // Col Q
         if (rowDate && rowDate.toDateString() === today.toDateString()) {
@@ -51,38 +42,19 @@ export default function Home() {
         }
         return count;
       }, 0);
+      
+      console.log('Calculated dailyCasesCount:', dailyCasesCount);
       setDailyCases(dailyCasesCount);
 
-
-      // --- 3. Calculate Financial Metrics (Tab 'Dashboard', Col M Date, Cols N, O, P, L) ---
-      let todayCases = 0;
-      let accumAmountReceived = 0;
-      let accumIncome = 0;
-      let pending = 0;
-
-      dashboardData.forEach((row: any) => {
-        const rowDate = parseSheetDate(row[12]); // Col M
-        
-        // Count/Sum Today
-        if (rowDate && rowDate.toDateString() === today.toDateString()) {
-          todayCases += 1;
-        }
-
-        // Sum Accumulated Month
-        if (rowDate && rowDate >= startOfMonth && rowDate <= endOfMonth) {
-          accumAmountReceived += parseFloat(row[13]) || 0; // Col N
-          accumIncome += (parseFloat(row[14]) || 0) + (parseFloat(row[15]) || 0); // Col O+P
-        }
-
-        // Pending (Col M has no Date, Col L value)
-        if (!rowDate) {
-          pending += parseFloat(row[11]) || 0; // Col L
-        }
-      });
-      setTodayCasesReceived(todayCases);
-      setAccumulatedAmountReceived(accumAmountReceived);
-      setAccumulatedIncome(accumIncome);
-      setPendingAmount(pending);
+      setDailyAmount(0);
+      setDailyAdditional(0);
+      setAccumulatedCases(0);
+      setAccumulatedAmount(0);
+      setAccumulatedAdditional(0);
+      setTodayCasesReceived(0);
+      setAccumulatedAmountReceived(0);
+      setAccumulatedIncome(0);
+      setPendingAmount(0);
     }
 
     
