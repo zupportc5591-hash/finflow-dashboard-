@@ -35,6 +35,7 @@ export default function Home() {
         return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
       };
 
+      const today = new Date(selectedDate);
       const startOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
       const endOfMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
