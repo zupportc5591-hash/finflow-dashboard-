@@ -30,9 +30,23 @@ export default function Home() {
       
       const parseSheetDate = (dateStr: any) => {
         if (!dateStr || typeof dateStr !== 'string') return null;
+        
+        // Handle 'Date(y,m,d)' format
         const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (!match) return null;
-        return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        
+        // Handle 'DD/MM/YYYY' format
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            return new Date(year, month, day);
+          }
+        }
+        
+        return null;
       };
 
       const dailyCasesCount = templateData.reduce((count: number, row: any) => {
