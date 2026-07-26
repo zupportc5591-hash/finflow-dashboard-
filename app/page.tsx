@@ -22,11 +22,12 @@ export default function Home() {
   const [pendingAmount, setPendingAmount] = useState(0);
   const [overdueCases, setOverdueCases] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any[]>([]);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchData() {
-      const templateData = (await getSheetData(SHEET_ID, 'Template')).slice(1);
+      const allTemplateData = await getSheetData(SHEET_ID, 'Template');
+      // Row 214 is index 213. Slice from 213 to get data from row 214 onwards.
+      const templateData = allTemplateData.slice(213);
       
       const parseSheetDate = (dateStr: any) => {
         if (!dateStr || typeof dateStr !== 'string') return null;
@@ -46,11 +47,7 @@ export default function Home() {
         return null;
       };
 
-      // Debugging: Extract first 5 dates
-      const dates = templateData.slice(0, 5).map((row: any) => row[16]);
-      setDebugInfo(dates);
-
-      const dailyCasesCount = templateData.reduce((count: number, row: any, index: number) => {
+      const dailyCasesCount = templateData.reduce((count: number, row: any) => {
         const rowDateStr = parseSheetDate(row[16]); // Col Q (Index 16)
         
         if (rowDateStr === selectedDate) {
