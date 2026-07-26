@@ -39,23 +39,20 @@ export default function Home() {
       const startOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
       const endOfMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
-      // --- 1. Fetch data ---
-      const dailyPcData = (await getSheetData(SHEET_ID, 'Dashboard PC')).slice(1);
+      // 1. Fetch data
+      const templateData = (await getSheetData(SHEET_ID, 'Template')).slice(1);
       const dashboardData = (await getSheetData(SHEET_ID, 'Dashboard')).slice(1);
 
-      // --- 2. Calculate 'ยอดเพิ่มเติม' (Tab 'Dashboard PC', Col B Date, Col M Value) ---
-      let dailyAdd = 0;
-      let accumAdd = 0;
-      dailyPcData.forEach((row: any) => {
-        const rowDate = parseSheetDate(row[1]); // Col B
-        if (!rowDate) return;
-        const val = parseFloat(row[12]) || 0; // Col M
-        
-        if (rowDate.toDateString() === today.toDateString()) dailyAdd += val;
-        if (rowDate >= startOfMonth && rowDate <= endOfMonth) accumAdd += val;
-      });
-      setDailyAdditional(dailyAdd);
-      setAccumulatedAdditional(accumAdd);
+      // 2. Calculate 'จำนวนเคสปิดวันนี้' (Tab 'Template', Col Q Date, Index 16)
+      const dailyCasesCount = templateData.reduce((count: number, row: any) => {
+        const rowDate = parseSheetDate(row[16]); // Col Q
+        if (rowDate && rowDate.toDateString() === today.toDateString()) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+      setDailyCases(dailyCasesCount);
+
 
       // --- 3. Calculate Financial Metrics (Tab 'Dashboard', Col M Date, Cols N, O, P, L) ---
       let todayCases = 0;
