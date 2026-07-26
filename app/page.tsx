@@ -22,6 +22,7 @@ export default function Home() {
   const [pendingAmount, setPendingAmount] = useState(0);
   const [overdueCases, setOverdueCases] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -45,9 +46,12 @@ export default function Home() {
         return null;
       };
 
+      // Debugging: Extract first 5 dates
+      const dates = templateData.slice(0, 5).map((row: any) => row[16]);
+      setDebugInfo(dates);
+
       const dailyCasesCount = templateData.reduce((count: number, row: any, index: number) => {
         const rowDateStr = parseSheetDate(row[16]); // Col Q (Index 16)
-        if (index < 5) console.log(`Row ${index} - Col Q Date Str: ${row[16]}, Parsed Date: ${rowDateStr}, Selected: ${selectedDate}`);
         
         if (rowDateStr === selectedDate) {
           return count + 1;
@@ -55,7 +59,6 @@ export default function Home() {
         return count;
       }, 0);
       
-      console.log('Calculated dailyCasesCount:', dailyCasesCount);
       setDailyCases(dailyCasesCount);
 
       setDailyAmount(0);
@@ -147,6 +150,11 @@ export default function Home() {
               </div>
                 <OverdueTableAdvanced data={overdueCases} />
 
+                {/* Debugging Section */}
+                <div className="mt-8 p-4 bg-bg-card border border-border rounded-xl">
+                  <h4 className="text-text-muted">Debug Dates from Col Q (Template Tab):</h4>
+                  <pre className="text-text-main text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
             </section>
           )}
 
