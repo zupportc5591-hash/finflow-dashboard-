@@ -26,32 +26,30 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       const templateData = (await getSheetData(SHEET_ID, 'Template')).slice(1);
-      const today = new Date(selectedDate);
       
       const parseSheetDate = (dateStr: any) => {
         if (!dateStr || typeof dateStr !== 'string') return null;
         
         // Handle 'Date(y,m,d)' format
         const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        if (match) return `${match[1]}-${(parseInt(match[2]) + 1).toString().padStart(2, '0')}-${match[3].padStart(2, '0')}`;
         
         // Handle 'DD/MM/YYYY' format
         const parts = dateStr.split('/');
         if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-            return new Date(year, month, day);
-          }
+          const day = parts[0].padStart(2, '0');
+          const month = parts[1].padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
         }
-        
         return null;
       };
 
-      const dailyCasesCount = templateData.reduce((count: number, row: any) => {
-        const rowDate = parseSheetDate(row[16]); // Col Q
-        if (rowDate && rowDate.toDateString() === today.toDateString()) {
+      const dailyCasesCount = templateData.reduce((count: number, row: any, index: number) => {
+        const rowDateStr = parseSheetDate(row[16]); // Col Q (Index 16)
+        if (index < 5) console.log(`Row ${index} - Col Q Date Str: ${row[16]}, Parsed Date: ${rowDateStr}, Selected: ${selectedDate}`);
+        
+        if (rowDateStr === selectedDate) {
           return count + 1;
         }
         return count;
