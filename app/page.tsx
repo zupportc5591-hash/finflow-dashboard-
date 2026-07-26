@@ -12,10 +12,14 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [dailyCases, setDailyCases] = useState(0);
   const [dailyAmount, setDailyAmount] = useState(0);
-  const [monthlyAccumulatedCases, setMonthlyAccumulatedCases] = useState(0);
-  const [monthlyAccumulatedAmount, setMonthlyAccumulatedAmount] = useState(0);
-  const [moneyForHeartAmount, setMoneyForHeartAmount] = useState(0);
-  const [pendingMoneyForHeartAmount, setPendingMoneyForHeartAmount] = useState(0);
+  const [dailyAdditional, setDailyAdditional] = useState(0);
+  const [accumulatedCases, setAccumulatedCases] = useState(0);
+  const [accumulatedAmount, setAccumulatedAmount] = useState(0);
+  const [accumulatedAdditional, setAccumulatedAdditional] = useState(0);
+  const [todayCasesReceived, setTodayCasesReceived] = useState(0);
+  const [accumulatedAmountReceived, setAccumulatedAmountReceived] = useState(0);
+  const [accumulatedIncome, setAccumulatedIncome] = useState(0);
+  const [pendingAmount, setPendingAmount] = useState(0);
   const [overdueCases, setOverdueCases] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any[]>([]);
 
@@ -23,212 +27,66 @@ export default function Home() {
     async function fetchData() {
       const current = new Date(selectedDate);
       
-      // Calculate tabs: All months for the current year
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const tabs = months.map(m => `FF${m} ${current.getFullYear().toString().slice(-2)}`);
-      
-      const allTabsData = await Promise.all(tabs.map(tab => getSheetData(SHEET_ID, tab)));
-      const allRows = allTabsData.flat().slice(1); // Assuming first row is header
-
-      // --- NEW: History Data Calculation ---
-      const histData = months.map((month, index) => {
-          const startRange = new Date(current.getFullYear(), index, 26);
-          const endRange = new Date(current.getFullYear(), index + 1, 25);
-          
-          const filtered = allRows.filter((row: any) => {
-            if (!row[12] || !String(row[12]).includes('Date(')) return false;
-            const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
-            if (!match) return false;
-            const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-            return rowDate >= startRange && rowDate <= endRange;
-          });
-
-          // MfH filtered for this range
-          const mfhFiltered = allRows.filter((row: any) => {
-            if (!row[23] || !String(row[23]).includes('Date(')) return false;
-            const match = String(row[23]).match(/Date\((\d+),(\d+),(\d+)\)/);
-            if (!match) return false;
-            const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-            return rowDate >= startRange && rowDate <= endRange;
-          });
-          const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[41]) || 0), 0);
-          
-          return {
-              month,
-              cases: filtered.length,
-              amount: Math.round(filtered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0) * 100) / 100,
-              mfhIncome: Math.round(mfhTotal * 100) / 100
-          };
-      });
-      setHistoryData(histData);
-      // --- END NEW ---
-
-      // 1. Daily Calculation (From current tab)
-      const currentTabName = `FF${current.toLocaleString('en-US', { month: 'short' })} ${current.getFullYear().toString().slice(-2)}`;
-      const currData = await getSheetData(SHEET_ID, currentTabName);
-      
-      const dailyFiltered = currData.slice(1).filter((row: any) => {
-        const colIndex = 12; // Column M
-        if (!row[colIndex] || !String(row[colIndex]).includes('Date(')) return false;
-        
-        const match = String(row[colIndex]).match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (!match) return false;
-        
-        const normalizedDate = `${match[1]}-${(parseInt(match[2]) + 1).toString().padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-        return normalizedDate === selectedDate;
-      });
-
-      setDailyCases(dailyFiltered.length);
-      const dailyTotal = dailyFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0);
-      setDailyAmount(Math.round(dailyTotal * 100) / 100);
-
-      // 2. Monthly Calculation (26th of month X to 25th of month X+1)
-      let startRange, endRange;
-      if (current.getDate() >= 26) {
-        startRange = new Date(current.getFullYear(), current.getMonth(), 26);
-        endRange = new Date(current.getFullYear(), current.getMonth() + 1, 25);
-      } else {
-        startRange = new Date(current.getFullYear(), current.getMonth() - 1, 26);
-        endRange = new Date(current.getFullYear(), current.getMonth(), 25);
-      }
-
-      const monthlyFiltered = allRows.filter((row: any) => {
-        if (!row[12] || !String(row[12]).includes('Date(')) return false;
-        const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (!match) return false;
-        const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        return rowDate >= startRange && rowDate <= endRange;
-      });
-      
-      setMonthlyAccumulatedCases(monthlyFiltered.length);
-      const monthlyTotal = monthlyFiltered.reduce((sum: number, row: any) => sum + (parseFloat(row[33]) || 0), 0);
-      setMonthlyAccumulatedAmount(Math.round(monthlyTotal * 100) / 100);
-      
-      // 3. New MfH Logic (Col X/23 Date, Sum AP(41) - AK(36) or AQ(42) - AK(36))
-      const mfhSheetName = 'งานส่วนกลาง ปี 2569';
-      const mfhSheetData = await getSheetData(SHEET_ID, mfhSheetName);
-      console.log('Sample Row from MfH Sheet:', mfhSheetData.length > 1 ? mfhSheetData[1] : 'No data');
-      
-      const parseCustomDate = (dateStr: any) => {
-        if (!dateStr) return null;
-        const match = String(dateStr).match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        
-        const parts = String(dateStr).split('/');
-        if (parts.length === 3) {
-            const day = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
-            const year = parseInt(parts[2]);
-            return new Date(year, month, day);
-        }
-        return null;
+      // Helper: Parse 'Date(y,m,d)' string
+      const parseSheetDate = (dateStr: any) => {
+        if (!dateStr || typeof dateStr !== 'string') return null;
+        const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+        if (!match) return null;
+        return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
       };
-      
-      const mfhFiltered = mfhSheetData.slice(1).filter((row: any, index: number) => {
-        const rowDate = parseCustomDate(row[23]);
-        if (index < 5) console.log(`Row ${index} - Col 23: ${row[23]}, Parsed Date: ${rowDate}, InRange: ${rowDate && rowDate >= startRange && rowDate <= endRange}`);
-        return rowDate && rowDate >= startRange && rowDate <= endRange;
+
+      const startOfMonth = new Date(current.getFullYear(), current.getMonth(), 1);
+      const endOfMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+
+      // --- 1. Fetch data ---
+      const dailyPcData = (await getSheetData(SHEET_ID, 'Dashboard PC')).slice(1);
+      const dashboardData = (await getSheetData(SHEET_ID, 'Dashboard')).slice(1);
+
+      // --- 2. Calculate 'ยอดเพิ่มเติม' (Tab 'Dashboard PC', Col B Date, Col M Value) ---
+      let dailyAdd = 0;
+      let accumAdd = 0;
+      dailyPcData.forEach((row: any) => {
+        const rowDate = parseSheetDate(row[1]); // Col B
+        if (!rowDate) return;
+        const val = parseFloat(row[12]) || 0; // Col M
+        
+        if (rowDate.toDateString() === today.toDateString()) dailyAdd += val;
+        if (rowDate >= startOfMonth && rowDate <= endOfMonth) accumAdd += val;
       });
-      
-      const mfhTotal = mfhFiltered.reduce((sum: number, row: any) => {
-          const rowDate = parseCustomDate(row[23]);
-          if (!rowDate) return sum;
-          
-          const ak = parseFloat(row[36]) || 0;
-          const incomeCol = (rowDate >= new Date(2026, 6, 1)) ? 42 : 41;
-          const income = parseFloat(row[incomeCol]) || 0;
-          console.log(`MfH Row Calc - Date: ${rowDate}, IncomeCol: ${incomeCol}, Income: ${income}, AK: ${ak}, Result: ${income - ak}`);
-          
-          return sum + (income - ak);
-      }, 0);
-      setMoneyForHeartAmount(Math.round(mfhTotal * 100) / 100);
+      setDailyAdditional(dailyAdd);
+      setAccumulatedAdditional(accumAdd);
 
-      // Pending MfH Logic (Col M/12 Date, Col X/23 NOT Date, Sum AP/41 or AQ/42, Exclude JAI2603026)
-      const pendingMfhFiltered = allRows.filter((row: any) => {
-        const id = row[0];
-        if (id === 'JAI2603026') return false;
+      // --- 3. Calculate Financial Metrics (Tab 'Dashboard', Col M Date, Cols N, O, P, L) ---
+      let todayCases = 0;
+      let accumAmountReceived = 0;
+      let accumIncome = 0;
+      let pending = 0;
+
+      dashboardData.forEach((row: any) => {
+        const rowDate = parseSheetDate(row[12]); // Col M
         
-        const isDateM = row[12] && String(row[12]).includes('Date(');
-        const isDateX = row[23] && String(row[23]).includes('Date(');
-        return isDateM && !isDateX;
-      });
+        // Count/Sum Today
+        if (rowDate && rowDate.toDateString() === today.toDateString()) {
+          todayCases += 1;
+        }
 
-      const pendingMfhTotal = pendingMfhFiltered.reduce((sum: number, row: any) => {
-        // Parse date from Col M (index 12)
-        const match = String(row[12]).match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (!match) return sum;
-        const rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        
-        // Col AP (41) before July 2026, Col AQ (42) from July 2026
-        const columnToSum = (rowDate >= new Date(2026, 6, 1)) ? 42 : 41; // July is month 6 (0-indexed)
-        const value = parseFloat(row[columnToSum]) || 0;
-        return sum + value;
-      }, 0);
-      
-      setPendingMoneyForHeartAmount(Math.round(pendingMfhTotal * 100) / 100);
+        // Sum Accumulated Month
+        if (rowDate && rowDate >= startOfMonth && rowDate <= endOfMonth) {
+          accumAmountReceived += parseFloat(row[13]) || 0; // Col N
+          accumIncome += (parseFloat(row[14]) || 0) + (parseFloat(row[15]) || 0); // Col O+P
+        }
 
-      // Overdue Case Logic
-      const overdueList: any[] = [];
-      
-      allRows.forEach((row: any) => {
-        if (row[23] || row[0] === 'JAI2603026') return; // Col X must be empty AND ID must not be JAI2603026
-
-        const productType = row[31]; // Col AF
-        
-        const parseDate = (val: any) => {
-          if (!val) return null;
-          // Check for "Date(year,month,day)" format explicitly
-          const match = String(val).match(/Date\((\d+),(\d+),(\d+)\)/);
-          if (!match) return null;
-          return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
-        };
-
-        const dates: { [key: string]: { date: Date | null, colIndex: number } } = {
-          M: { date: parseDate(row[12]), colIndex: 12 }, N: { date: parseDate(row[13]), colIndex: 13 },
-          O: { date: parseDate(row[14]), colIndex: 14 }, P: { date: parseDate(row[15]), colIndex: 15 },
-          Q: { date: parseDate(row[16]), colIndex: 16 }, R: { date: parseDate(row[17]), colIndex: 17 },
-          T: { date: parseDate(row[19]), colIndex: 19 }, U: { date: parseDate(row[20]), colIndex: 20 },
-          V: { date: parseDate(row[21]), colIndex: 21 }, W: { date: parseDate(row[22]), colIndex: 22 }
-        };
-
-        // Determine latest step and total duration
-        const stepMap: { [key: string]: string } = {
-          N: 'ยิ่นชุดโอน',
-          O: 'ได้รับเล่ม',
-          P: 'ส่งสำเนาให้jai',
-          Q: 'รับเอกสารชุดโอนจากJAI',
-          R: 'วันที่นัดลูกค้าไปขนส่ง',
-          T: 'ลูกค้าไปตรวจรถ',
-          U: 'แจ้งตรวจรถผ่าน',
-          V: 'รับเล่มคืนจากขนส่ง',
-          W: 'ส่งเล่มให้JAI'
-        };
-        
-        let latestDateCol = '';
-        let maxDate = new Date(0);
-        Object.entries(dates).forEach(([key, val]) => {
-            if (val.date && val.date > maxDate) {
-                maxDate = val.date;
-                latestDateCol = key;
-            }
-        });
-        const latestStep = stepMap[latestDateCol] || 'ขั้นตอนล่าสุด';
-
-        if (dates.M.date) {
-            const today = new Date();
-            const totalDays = (today.getTime() - dates.M.date.getTime()) / (1000 * 60 * 60 * 24);
-            const limit = productType === 'จำนำ' ? 10 : productType === 'HP' ? 20 : 999;
-
-            if (totalDays > limit) {
-               overdueList.push({
-                 id: row[0], name: `${row[3]} ${row[4]}`, latestStep, exceededDays: Math.floor(totalDays - limit),
-                 dates: Object.fromEntries(Object.entries(dates).filter(([_, v]) => v.date).map(([k, v]) => [k, v.date!.toLocaleDateString()]))
-               });
-            }
+        // Pending (Col M has no Date, Col L value)
+        if (!rowDate) {
+          pending += parseFloat(row[11]) || 0; // Col L
         }
       });
-      setOverdueCases(overdueList);
+      setTodayCasesReceived(todayCases);
+      setAccumulatedAmountReceived(accumAmountReceived);
+      setAccumulatedIncome(accumIncome);
+      setPendingAmount(pending);
     }
+
     
     fetchData();
   }, [selectedDate]);
@@ -283,7 +141,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
                   <SummaryCard title="จำนวนเคสปิดวันนี้" value={dailyCases.toString()} />
                   <SummaryCard title="ยอดปิดวงเงินวันนี้" value={`฿${dailyAmount.toLocaleString()}`} />
-                  <SummaryCard title="ยอดเพิ่มเติมวันนี้" value="฿0" />
+                  <SummaryCard title="ยอดเพิ่มเติมวันนี้" value={`฿${dailyAdditional.toLocaleString()}`} />
                 </div>
               </div>
 
@@ -292,17 +150,17 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
                   <SummaryCard title="จำนวนเคสปิดวงเงินสะสม" value={monthlyAccumulatedCases.toString()} />
                   <SummaryCard title="ยอดปิดวงเงินสะสม" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
-                  <SummaryCard title="ยอดเพิ่มเติมสะสม" value="฿0" />
+                  <SummaryCard title="ยอดเพิ่มเติมสะสม" value={`฿${accumulatedAdditional.toLocaleString()}`} />
                 </div>
               </div>
 
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-text-main mb-4 px-1">ข้อมูลการเงิน</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-bg-card p-4 rounded-xl border border-border">
-                  <SummaryCard title="จำนวนเคสรับเงินวันนี้" value={monthlyAccumulatedCases.toString()} />
-                  <SummaryCard title="ยอดเงินรับสะสม" value={`฿${monthlyAccumulatedAmount.toLocaleString()}`} />
-                  <SummaryCard title="รายได้สะสม" value={`฿${moneyForHeartAmount.toLocaleString()}`} />
-                  <SummaryCard title="จำนวนเงินค้างรับ" value={`฿${pendingMoneyForHeartAmount.toLocaleString()}`} />
+                  <SummaryCard title="จำนวนเคสรับเงินวันนี้" value={todayCasesReceived.toString()} />
+                  <SummaryCard title="ยอดเงินรับสะสม" value={`฿${accumulatedAmountReceived.toLocaleString()}`} />
+                  <SummaryCard title="รายได้สะสม" value={`฿${accumulatedIncome.toLocaleString()}`} />
+                  <SummaryCard title="จำนวนเงินค้างรับ" value={`฿${pendingAmount.toLocaleString()}`} />
                 </div>
               </div>
                 <OverdueTableAdvanced data={overdueCases} />
