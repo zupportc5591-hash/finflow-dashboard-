@@ -130,6 +130,10 @@ export default function Home() {
       let monthlyFeeIncomeSum = 0;
       let riderMileageMap: { [key: string]: number } = {};
 
+      // Monthly Analytics date range calculation (26th previous to 25th current)
+      const startDate = new Date(selectedYear, selectedMonth - 1, 26);
+      const endDate = new Date(selectedYear, selectedMonth, 25);
+      
       dashboardData.forEach((row: any) => {
         // Pending check (check if Col N (Index 13) is empty)
         if (!row[13]) {
@@ -143,7 +147,6 @@ export default function Home() {
         const idName = row[2]; // Col C (Index 2)
         
         // Use stepMap to get the latest step
-        // In the Template sheet, Column G is Name (index 6), M is Step (index 12)
         const latestStep = stepMap.get(row[1]) || type; // Lookup by ID from Col B (Index 1)
 
         if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
@@ -152,7 +155,7 @@ export default function Home() {
             name: row[2], // Col C (Index 2)
             latestStep: latestStep, 
             exceededDays: exceededDays,
-            dates: {} // Populating this might require more columns if needed
+            dates: {}
           });
         }
 
@@ -170,14 +173,20 @@ export default function Home() {
             todayCasesReceivedCount += 1;
           }
 
-          // Monthly accumulated check
+          // Monthly accumulated check (Calendar month)
           if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
             accumulatedAmountReceivedSum += amountReceived;
             accumulatedIncomeSum += income;
-            
-            // Monthly Analytics
-            if (row[13]) monthlyReceivedCasesCount += 1; // Assuming Col N (Index 13) indicates received
-            monthlyFeeIncomeSum += income; // Assuming income comes from Col P (Index 15)
+          }
+
+          // Monthly Analytics sliding window check (26th prev - 25th current)
+          if (rowDate >= startDate && rowDate <= endDate) {
+            if (row[13]) monthlyReceivedCasesCount += 1; // Assuming Col N indicates received
+          }
+          
+          // Monthly Analytics (Calendar month for income/mileage as before)
+          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+            monthlyFeeIncomeSum += income; 
             if (rider) {
               riderMileageMap[rider] = (riderMileageMap[rider] || 0) + mileage;
             }
