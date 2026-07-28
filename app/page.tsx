@@ -20,8 +20,9 @@ export default function Home() {
   const [accumulatedAmountReceived, setAccumulatedAmountReceived] = useState(0);
   const [accumulatedIncome, setAccumulatedIncome] = useState(0);
   const [pendingAmount, setPendingAmount] = useState(0);
-  const [overdueCases, setOverdueCases] = useState<any[]>([]);
-  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [monthlyReceivedCases, setMonthlyReceivedCases] = useState(0);
+  const [monthlyFeeIncome, setMonthlyFeeIncome] = useState(0);
+  const [riderMileage, setRiderMileage] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -123,6 +124,10 @@ export default function Home() {
       let pendingAmountSum = 0;
       let overdueCasesList: any[] = [];
       
+      let monthlyReceivedCasesCount = 0;
+      let monthlyFeeIncomeSum = 0;
+      let riderMileageMap: { [key: string]: number } = {};
+
       dashboardData.forEach((row: any) => {
         // Pending check (check if Col N (Index 13) is empty)
         if (!row[13]) {
@@ -137,7 +142,7 @@ export default function Home() {
         
         // Use stepMap to get the latest step
         // In the Template sheet, Column G is Name (index 6), M is Step (index 12)
-        const latestStep = stepMap.get(idName) || type;
+        const latestStep = stepMap.get(row[1]) || type; // Lookup by ID from Col B (Index 1)
 
         if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
           overdueCasesList.push({
@@ -155,6 +160,8 @@ export default function Home() {
           const rowDate = new Date(rowDateStr);
           const amountReceived = parseFloat(row[13]) || 0; // Col N (Index 13)
           const income = parseFloat(row[15]) || 0; // Col P (Index 15)
+          const rider = row[20]; // Assuming Col U (Index 20) is Rider Name
+          const mileage = parseFloat(row[21]) || 0; // Assuming Col V (Index 21) is Mileage
           
           // Daily check
           if (rowDateStr === selectedDate) {
@@ -165,6 +172,13 @@ export default function Home() {
           if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
             accumulatedAmountReceivedSum += amountReceived;
             accumulatedIncomeSum += income;
+            
+            // Monthly Analytics
+            if (row[13]) monthlyReceivedCasesCount += 1; // Assuming Col N (Index 13) indicates received
+            monthlyFeeIncomeSum += income; // Assuming income comes from Col P (Index 15)
+            if (rider) {
+              riderMileageMap[rider] = (riderMileageMap[rider] || 0) + mileage;
+            }
           }
         }
       });
@@ -180,6 +194,10 @@ export default function Home() {
       setAccumulatedIncome(accumulatedIncomeSum);
       setPendingAmount(pendingAmountSum);
       setOverdueCases(overdueCasesList);
+      
+      setMonthlyReceivedCases(monthlyReceivedCasesCount);
+      setMonthlyFeeIncome(monthlyFeeIncomeSum);
+      setRiderMileage(riderMileageMap);
     }
 
     fetchData();
@@ -262,7 +280,35 @@ export default function Home() {
           )}
 
           {activeTab === 'monthly' && (
-            <section className="text-center text-text-muted p-12">กำลังพัฒนาส่วน Monthly Analytics...</section>
+            <section className="mt-8">
+              <h2 className="text-xl font-bold text-text-main mb-6">ข้อมูลสรุปประจำเดือน</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <SummaryCard title="จำนวนเคสที่ได้รับเงินในเดือนนี้" value={monthlyReceivedCases.toString()} />
+                <SummaryCard title="รายได้จากค่าธรรมเนียมใช้วงเงิน (เดือนนี้)" value={`฿${monthlyFeeIncome.toLocaleString()}`} />
+              </div>
+
+              <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
+                <div className="p-4 border-b border-border">
+                  <h3 className="font-bold text-text-main">จำนวน กม. ของ Rider แต่ละคน</h3>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-text-muted border-b border-border">
+                      <th className="p-4 text-left">ชื่อ Rider</th>
+                      <th className="p-4 text-right">ระยะทางรวม (กม.)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {Object.entries(riderMileage).map(([rider, mileage]) => (
+                      <tr key={rider} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4">{rider}</td>
+                        <td className="p-4 text-right">{mileage.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
 
           {activeTab === 'history' && (
