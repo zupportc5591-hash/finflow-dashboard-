@@ -83,12 +83,24 @@ export default function Home() {
       });
       
       let dailyAdditionalSum = 0;
+      let accumulatedAdditionalSum = 0;
+
       additionalData.forEach((row: any) => {
         const rowDateStr = parseSheetDate(row[1]); // Col B (Index 1)
         
-        if (rowDateStr === selectedDate) {
+        if (rowDateStr) {
+          const rowDate = new Date(rowDateStr);
           const amount = parseFloat(row[12]) || 0; // Col M (Index 12)
-          dailyAdditionalSum += amount;
+          
+          // Daily check
+          if (rowDateStr === selectedDate) {
+            dailyAdditionalSum += amount;
+          }
+
+          // Monthly accumulated check
+          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+            accumulatedAdditionalSum += amount;
+          }
         }
       });
       
@@ -97,7 +109,7 @@ export default function Home() {
       setDailyAdditional(dailyAdditionalSum);
       setAccumulatedCases(accumulatedCasesCount);
       setAccumulatedAmount(accumulatedAmountSum);
-      setAccumulatedAdditional(0);
+      setAccumulatedAdditional(accumulatedAdditionalSum);
       setTodayCasesReceived(0);
       setAccumulatedAmountReceived(0);
       setAccumulatedIncome(0);
