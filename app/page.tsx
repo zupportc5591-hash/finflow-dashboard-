@@ -47,18 +47,23 @@ export default function Home() {
         return null;
       };
 
-      const dailyCasesCount = templateData.reduce((count: number, row: any) => {
+      let dailyCasesCount = 0;
+      let dailyAmountSum = 0;
+
+      templateData.forEach((row: any) => {
         const rowDateStr = parseSheetDate(row[14]); // Col O (Index 14)
         
         if (rowDateStr === selectedDate) {
-          return count + 1;
+          dailyCasesCount += 1;
+          
+          // Assuming row[34] is the amount, handle potential string/non-number
+          const amount = parseFloat(row[34]) || 0;
+          dailyAmountSum += amount;
         }
-        return count;
-      }, 0);
+      });
       
       setDailyCases(dailyCasesCount);
-
-      setDailyAmount(0);
+      setDailyAmount(dailyAmountSum);
       setDailyAdditional(0);
       setAccumulatedCases(0);
       setAccumulatedAmount(0);
