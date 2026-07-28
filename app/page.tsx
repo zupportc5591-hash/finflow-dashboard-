@@ -54,14 +54,29 @@ export default function Home() {
 
       let dailyCasesCount = 0;
       let dailyAmountSum = 0;
+      let accumulatedCasesCount = 0;
+
+      const selectedDateObj = new Date(selectedDate);
+      const selectedMonth = selectedDateObj.getMonth();
+      const selectedYear = selectedDateObj.getFullYear();
 
       templateData.forEach((row: any) => {
         const rowDateStr = parseSheetDate(row[14]); // Col O (Index 14)
         
-        if (rowDateStr === selectedDate) {
-          dailyCasesCount += 1;
-          const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
-          dailyAmountSum += amount;
+        if (rowDateStr) {
+          const rowDate = new Date(rowDateStr);
+          
+          // Daily check
+          if (rowDateStr === selectedDate) {
+            dailyCasesCount += 1;
+            const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
+            dailyAmountSum += amount;
+          }
+
+          // Monthly accumulated check
+          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+            accumulatedCasesCount += 1;
+          }
         }
       });
       
@@ -78,7 +93,7 @@ export default function Home() {
       setDailyCases(dailyCasesCount);
       setDailyAmount(dailyAmountSum);
       setDailyAdditional(dailyAdditionalSum);
-      setAccumulatedCases(0);
+      setAccumulatedCases(accumulatedCasesCount);
       setAccumulatedAmount(0);
       setAccumulatedAdditional(0);
       setTodayCasesReceived(0);
