@@ -20,6 +20,7 @@ export default function Home() {
   const [accumulatedAmountReceived, setAccumulatedAmountReceived] = useState(0);
   const [accumulatedIncome, setAccumulatedIncome] = useState(0);
   const [pendingAmount, setPendingAmount] = useState(0);
+  const [overdueCases, setOverdueCases] = useState<any[]>([]);
   const [monthlyReceivedCases, setMonthlyReceivedCases] = useState(0);
   const [monthlyFeeIncome, setMonthlyFeeIncome] = useState(0);
   const [riderMileage, setRiderMileage] = useState<{ [key: string]: number }>({});
