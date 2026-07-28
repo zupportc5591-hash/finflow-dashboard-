@@ -6,28 +6,21 @@ import DataTable from '@/components/DataTable';
 import { getSheetData } from '@/lib/googleSheets';
 
 const SHEET_ID = '151piROO58-UHrrRmhBX9PD6RvdiiOjMMMaXE6wInwaQ';
+const ADDITIONAL_SHEET_ID = '16mIGhs05nydPrZEqVXg8aFeez-6cV3t2VyHZibccpc4';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'history'>('daily');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dailyCases, setDailyCases] = useState(0);
-  const [dailyAmount, setDailyAmount] = useState(0);
-  const [dailyAdditional, setDailyAdditional] = useState(0);
-  const [accumulatedCases, setAccumulatedCases] = useState(0);
-  const [accumulatedAmount, setAccumulatedAmount] = useState(0);
-  const [accumulatedAdditional, setAccumulatedAdditional] = useState(0);
-  const [todayCasesReceived, setTodayCasesReceived] = useState(0);
-  const [accumulatedAmountReceived, setAccumulatedAmountReceived] = useState(0);
-  const [accumulatedIncome, setAccumulatedIncome] = useState(0);
-  const [pendingAmount, setPendingAmount] = useState(0);
-  const [overdueCases, setOverdueCases] = useState<any[]>([]);
-  const [historyData, setHistoryData] = useState<any[]>([]);
+// ... existing state definitions ...
 
   useEffect(() => {
     async function fetchData() {
+      // Fetch main data
       const allTemplateData = await getSheetData(SHEET_ID, 'Template');
-      // Row 214 is index 213. Slice from 213 to get data from row 214 onwards.
       const templateData = allTemplateData.slice(213);
+      
+      // Fetch additional data
+      const allAdditionalData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard PC');
+      // Assuming headers in row 0, data starts from row 1
+      const additionalData = allAdditionalData.slice(1);
       
       const parseSheetDate = (dateStr: any) => {
         if (!dateStr || typeof dateStr !== 'string') return null;
@@ -55,28 +48,26 @@ export default function Home() {
         
         if (rowDateStr === selectedDate) {
           dailyCasesCount += 1;
-          
-          // Assuming row[34] is the amount, handle potential string/non-number
-          const amount = parseFloat(row[34]) || 0;
+          const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
           dailyAmountSum += amount;
+        }
+      });
+      
+      let dailyAdditionalSum = 0;
+      additionalData.forEach((row: any) => {
+        const rowDateStr = parseSheetDate(row[1]); // Col B (Index 1)
+        
+        if (rowDateStr === selectedDate) {
+          const amount = parseFloat(row[12]) || 0; // Col M (Index 12)
+          dailyAdditionalSum += amount;
         }
       });
       
       setDailyCases(dailyCasesCount);
       setDailyAmount(dailyAmountSum);
-      setDailyAdditional(0);
-      setAccumulatedCases(0);
-      setAccumulatedAmount(0);
-      setAccumulatedAdditional(0);
-      setTodayCasesReceived(0);
-      setAccumulatedAmountReceived(0);
-      setAccumulatedIncome(0);
-      setPendingAmount(0);
-    }
+      setDailyAdditional(dailyAdditionalSum);
+      // ... existing setter calls ...
 
-    
-    fetchData();
-  }, [selectedDate]);
 
   const tabs = [
     { id: 'daily', label: 'Daily (Back office)' },
