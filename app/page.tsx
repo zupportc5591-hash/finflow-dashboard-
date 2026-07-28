@@ -111,12 +111,28 @@ export default function Home() {
       let accumulatedAmountReceivedSum = 0;
       let accumulatedIncomeSum = 0;
       let pendingAmountSum = 0;
+      let overdueCasesList: any[] = [];
       
       dashboardData.forEach((row: any) => {
         // Pending check (check if Col N (Index 13) is empty)
         if (!row[13]) {
           const pending = parseFloat(row[11]) || 0; // Col L (Index 11)
           pendingAmountSum += pending;
+        }
+
+        // Overdue check
+        const type = row[4]; // Col E (Index 4)
+        const exceededDays = parseFloat(row[19]) || 0; // Col T (Index 19)
+        const idName = row[2]; // Col C (Index 2)
+
+        if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
+          overdueCasesList.push({
+            id: idName,
+            name: idName,
+            latestStep: type,
+            exceededDays: exceededDays,
+            dates: {} // Populating this might require more columns if needed
+          });
         }
 
         const rowDateStr = parseSheetDate(row[12]); // Col M (Index 12)
@@ -149,6 +165,7 @@ export default function Home() {
       setAccumulatedAmountReceived(accumulatedAmountReceivedSum);
       setAccumulatedIncome(accumulatedIncomeSum);
       setPendingAmount(pendingAmountSum);
+      setOverdueCases(overdueCasesList);
     }
 
     fetchData();
