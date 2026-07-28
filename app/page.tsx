@@ -134,12 +134,16 @@ export default function Home() {
         const type = row[4]; // Col E (Index 4)
         const exceededDays = parseFloat(row[19]) || 0; // Col T (Index 19)
         const idName = row[2]; // Col C (Index 2)
+        
+        // Use stepMap to get the latest step
+        // In the Template sheet, Column G is Name (index 6), M is Step (index 12)
+        const latestStep = stepMap.get(idName) || type;
 
         if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
           overdueCasesList.push({
             id: idName,
             name: idName,
-            latestStep: stepMap.get(idName) || type, // Use mapped step
+            latestStep: latestStep, 
             exceededDays: exceededDays,
             dates: {} // Populating this might require more columns if needed
           });
