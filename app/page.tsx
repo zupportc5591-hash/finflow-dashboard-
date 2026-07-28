@@ -24,6 +24,7 @@ export default function Home() {
   const [monthlyReceivedCases, setMonthlyReceivedCases] = useState(0);
   const [monthlyFeeIncome, setMonthlyFeeIncome] = useState(0);
   const [riderMileage, setRiderMileage] = useState<{ [key: string]: number }>({});
+  const [historyData, setHistoryData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
