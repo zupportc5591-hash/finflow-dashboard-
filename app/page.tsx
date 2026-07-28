@@ -55,6 +55,7 @@ export default function Home() {
       let dailyCasesCount = 0;
       let dailyAmountSum = 0;
       let accumulatedCasesCount = 0;
+      let accumulatedAmountSum = 0;
 
       const selectedDateObj = new Date(selectedDate);
       const selectedMonth = selectedDateObj.getMonth();
@@ -65,17 +66,18 @@ export default function Home() {
         
         if (rowDateStr) {
           const rowDate = new Date(rowDateStr);
+          const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
           
           // Daily check
           if (rowDateStr === selectedDate) {
             dailyCasesCount += 1;
-            const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
             dailyAmountSum += amount;
           }
 
           // Monthly accumulated check
           if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
             accumulatedCasesCount += 1;
+            accumulatedAmountSum += amount;
           }
         }
       });
@@ -94,7 +96,7 @@ export default function Home() {
       setDailyAmount(dailyAmountSum);
       setDailyAdditional(dailyAdditionalSum);
       setAccumulatedCases(accumulatedCasesCount);
-      setAccumulatedAmount(0);
+      setAccumulatedAmount(accumulatedAmountSum);
       setAccumulatedAdditional(0);
       setTodayCasesReceived(0);
       setAccumulatedAmountReceived(0);
