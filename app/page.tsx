@@ -5,7 +5,7 @@ import { OverdueTableAdvanced } from '@/components/OverdueTableAdvanced';
 import DataTable from '@/components/DataTable';
 import { getSheetData } from '@/lib/googleSheets';
 
-const SHEET_ID = '1C5Th5V8I6homdPsm6FJbwLpSIpiCAGXnhMWsXMP8knw';
+const SHEET_ID = '151piROO58-UHrrRmhBX9PD6RvdiiOjMMMaXE6wInwaQ';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'history'>('daily');
@@ -48,7 +48,7 @@ export default function Home() {
       };
 
       const dailyCasesCount = templateData.reduce((count: number, row: any) => {
-        const rowDateStr = parseSheetDate(row[16]); // Col Q (Index 16)
+        const rowDateStr = parseSheetDate(row[14]); // Col O (Index 14)
         
         if (rowDateStr === selectedDate) {
           return count + 1;
@@ -147,11 +147,7 @@ export default function Home() {
               </div>
                 <OverdueTableAdvanced data={overdueCases} />
 
-                {/* Debugging Section */}
-                <div className="mt-8 p-4 bg-bg-card border border-border rounded-xl">
-                  <h4 className="text-text-muted">Debug Dates from Col Q (Template Tab):</h4>
-                  <pre className="text-text-main text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
-                </div>
+
             </section>
           )}
 
