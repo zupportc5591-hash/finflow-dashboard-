@@ -109,13 +109,15 @@ export default function Home() {
 
       let todayCasesReceivedCount = 0;
       let accumulatedAmountReceivedSum = 0;
+      let accumulatedIncomeSum = 0;
       
       dashboardData.forEach((row: any) => {
         const rowDateStr = parseSheetDate(row[12]); // Col M (Index 12)
         
         if (rowDateStr) {
           const rowDate = new Date(rowDateStr);
-          const amount = parseFloat(row[13]) || 0; // Col N (Index 13)
+          const amountReceived = parseFloat(row[13]) || 0; // Col N (Index 13)
+          const income = parseFloat(row[15]) || 0; // Col P (Index 15)
           
           // Daily check
           if (rowDateStr === selectedDate) {
@@ -124,7 +126,8 @@ export default function Home() {
 
           // Monthly accumulated check
           if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            accumulatedAmountReceivedSum += amount;
+            accumulatedAmountReceivedSum += amountReceived;
+            accumulatedIncomeSum += income;
           }
         }
       });
@@ -137,7 +140,7 @@ export default function Home() {
       setAccumulatedAdditional(accumulatedAdditionalSum);
       setTodayCasesReceived(todayCasesReceivedCount);
       setAccumulatedAmountReceived(accumulatedAmountReceivedSum);
-      setAccumulatedIncome(0);
+      setAccumulatedIncome(accumulatedIncomeSum);
       setPendingAmount(0);
     }
 
