@@ -2,14 +2,26 @@
 import { useState, useEffect } from 'react';
 import SummaryCard from '@/components/SummaryCard';
 import { OverdueTableAdvanced } from '@/components/OverdueTableAdvanced';
-import DataTable from '@/components/DataTable';
 import { getSheetData } from '@/lib/googleSheets';
 
 const SHEET_ID = '151piROO58-UHrrRmhBX9PD6RvdiiOjMMMaXE6wInwaQ';
 const ADDITIONAL_SHEET_ID = '16mIGhs05nydPrZEqVXg8aFeez-6cV3t2VyHZibccpc4';
 
 export default function Home() {
-// ... existing state definitions ...
+  const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'history'>('daily');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dailyCases, setDailyCases] = useState(0);
+  const [dailyAmount, setDailyAmount] = useState(0);
+  const [dailyAdditional, setDailyAdditional] = useState(0);
+  const [accumulatedCases, setAccumulatedCases] = useState(0);
+  const [accumulatedAmount, setAccumulatedAmount] = useState(0);
+  const [accumulatedAdditional, setAccumulatedAdditional] = useState(0);
+  const [todayCasesReceived, setTodayCasesReceived] = useState(0);
+  const [accumulatedAmountReceived, setAccumulatedAmountReceived] = useState(0);
+  const [accumulatedIncome, setAccumulatedIncome] = useState(0);
+  const [pendingAmount, setPendingAmount] = useState(0);
+  const [overdueCases, setOverdueCases] = useState<any[]>([]);
+  const [historyData, setHistoryData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -66,8 +78,17 @@ export default function Home() {
       setDailyCases(dailyCasesCount);
       setDailyAmount(dailyAmountSum);
       setDailyAdditional(dailyAdditionalSum);
-      // ... existing setter calls ...
+      setAccumulatedCases(0);
+      setAccumulatedAmount(0);
+      setAccumulatedAdditional(0);
+      setTodayCasesReceived(0);
+      setAccumulatedAmountReceived(0);
+      setAccumulatedIncome(0);
+      setPendingAmount(0);
+    }
 
+    fetchData();
+  }, [selectedDate]);
 
   const tabs = [
     { id: 'daily', label: 'Daily (Back office)' },
@@ -142,8 +163,6 @@ export default function Home() {
                 </div>
               </div>
                 <OverdueTableAdvanced data={overdueCases} />
-
-
             </section>
           )}
 
