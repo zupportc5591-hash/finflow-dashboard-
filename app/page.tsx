@@ -30,6 +30,9 @@ export default function Home() {
       const templateData = allTemplateData.slice(213);
       
       // Fetch additional data
+      const allDashboardData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard');
+      const dashboardData = allDashboardData.slice(1);
+      
       const allAdditionalData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard PC');
       // Assuming headers in row 0, data starts from row 1
       const additionalData = allAdditionalData.slice(1);
@@ -103,6 +106,15 @@ export default function Home() {
           }
         }
       });
+
+      let todayCasesReceivedCount = 0;
+      dashboardData.forEach((row: any) => {
+        const rowDateStr = parseSheetDate(row[12]); // Col M (Index 12)
+        
+        if (rowDateStr === selectedDate) {
+          todayCasesReceivedCount += 1;
+        }
+      });
       
       setDailyCases(dailyCasesCount);
       setDailyAmount(dailyAmountSum);
@@ -110,7 +122,7 @@ export default function Home() {
       setAccumulatedCases(accumulatedCasesCount);
       setAccumulatedAmount(accumulatedAmountSum);
       setAccumulatedAdditional(accumulatedAdditionalSum);
-      setTodayCasesReceived(0);
+      setTodayCasesReceived(todayCasesReceivedCount);
       setAccumulatedAmountReceived(0);
       setAccumulatedIncome(0);
       setPendingAmount(0);
