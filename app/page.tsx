@@ -128,6 +128,7 @@ export default function Home() {
       
       let monthlyReceivedCasesCount = 0;
       let monthlyFeeIncomeSum = 0;
+      let monthlyFeeIncomeCount = 0;
       let riderMileageMap: { [key: string]: number } = {};
 
       // Monthly Analytics date range calculation (26th previous to 25th current)
@@ -182,17 +183,23 @@ export default function Home() {
           // Monthly Analytics sliding window check (26th prev - 25th current)
           if (rowDate >= startDate && rowDate <= endDate) {
             if (row[13]) monthlyReceivedCasesCount += 1; // Assuming Col N indicates received
+            
+            // Fee Income: Sum Col I (Index 8) - (count * 1000)
+            const fee = parseFloat(row[8]) || 0;
+            monthlyFeeIncomeSum += fee;
+            monthlyFeeIncomeCount += 1; // Count rows for the subtraction
           }
           
           // Monthly Analytics (Calendar month for income/mileage as before)
           if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            monthlyFeeIncomeSum += income; 
             if (rider) {
               riderMileageMap[rider] = (riderMileageMap[rider] || 0) + mileage;
             }
           }
         }
       });
+      
+      const finalMonthlyFeeIncome = monthlyFeeIncomeSum - (monthlyFeeIncomeCount * 1000);
       
       setDailyCases(dailyCasesCount);
       setDailyAmount(dailyAmountSum);
@@ -207,7 +214,7 @@ export default function Home() {
       setOverdueCases(overdueCasesList);
       
       setMonthlyReceivedCases(monthlyReceivedCasesCount);
-      setMonthlyFeeIncome(monthlyFeeIncomeSum);
+      setMonthlyFeeIncome(finalMonthlyFeeIncome);
       setRiderMileage(riderMileageMap);
     }
 
