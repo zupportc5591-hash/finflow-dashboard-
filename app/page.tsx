@@ -141,8 +141,8 @@ export default function Home() {
 
         if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
           overdueCasesList.push({
-            id: idName,
-            name: idName,
+            id: row[1], // Col B (Index 1)
+            name: row[2], // Col C (Index 2)
             latestStep: latestStep, 
             exceededDays: exceededDays,
             dates: {} // Populating this might require more columns if needed
