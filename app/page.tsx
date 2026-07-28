@@ -110,8 +110,15 @@ export default function Home() {
       let todayCasesReceivedCount = 0;
       let accumulatedAmountReceivedSum = 0;
       let accumulatedIncomeSum = 0;
+      let pendingAmountSum = 0;
       
       dashboardData.forEach((row: any) => {
+        // Pending check (check if Col N (Index 13) is empty)
+        if (!row[13]) {
+          const pending = parseFloat(row[11]) || 0; // Col L (Index 11)
+          pendingAmountSum += pending;
+        }
+
         const rowDateStr = parseSheetDate(row[12]); // Col M (Index 12)
         
         if (rowDateStr) {
@@ -141,7 +148,7 @@ export default function Home() {
       setTodayCasesReceived(todayCasesReceivedCount);
       setAccumulatedAmountReceived(accumulatedAmountReceivedSum);
       setAccumulatedIncome(accumulatedIncomeSum);
-      setPendingAmount(0);
+      setPendingAmount(pendingAmountSum);
     }
 
     fetchData();
