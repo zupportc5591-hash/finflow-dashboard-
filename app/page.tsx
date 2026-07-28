@@ -131,9 +131,16 @@ export default function Home() {
       let monthlyFeeIncomeCount = 0;
       let riderMileageMap: { [key: string]: number } = {};
 
-      // Monthly Analytics date range calculation (26th previous to 25th current)
-      const startDate = new Date(selectedYear, selectedMonth - 1, 26);
-      const endDate = new Date(selectedYear, selectedMonth, 25);
+      // Monthly Analytics date range calculation (Dynamic 26th to 25th)
+      const day = selectedDateObj.getDate();
+      let startDate, endDate;
+      if (day >= 26) {
+        startDate = new Date(selectedYear, selectedMonth, 26);
+        endDate = new Date(selectedYear, selectedMonth + 1, 25);
+      } else {
+        startDate = new Date(selectedYear, selectedMonth - 1, 26);
+        endDate = new Date(selectedYear, selectedMonth, 25);
+      }
       
       dashboardData.forEach((row: any) => {
         // Pending check (check if Col N (Index 13) is empty)
