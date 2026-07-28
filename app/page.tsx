@@ -32,10 +32,10 @@ export default function Home() {
       // Build mapping for latestStep
       const stepMap = new Map<string, string>();
       templateData.forEach((row: any) => {
-        const name = row[6]; // Col G (Index 6)
+        const id = row[0]; // Col A (Index 0)
         const step = row[12]; // Col M (Index 12)
-        if (name) {
-          stepMap.set(name, step || '-');
+        if (id) {
+          stepMap.set(id, step || '-');
         }
       });
       
