@@ -29,6 +29,16 @@ export default function Home() {
       const allTemplateData = await getSheetData(SHEET_ID, 'Template');
       const templateData = allTemplateData.slice(213);
       
+      // Build mapping for latestStep
+      const stepMap = new Map<string, string>();
+      templateData.forEach((row: any) => {
+        const name = row[6]; // Col G (Index 6)
+        const step = row[12]; // Col M (Index 12)
+        if (name) {
+          stepMap.set(name, step || '-');
+        }
+      });
+      
       // Fetch additional data
       const allDashboardData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard');
       const dashboardData = allDashboardData.slice(1);
@@ -129,7 +139,7 @@ export default function Home() {
           overdueCasesList.push({
             id: idName,
             name: idName,
-            latestStep: type,
+            latestStep: stepMap.get(idName) || type, // Use mapped step
             exceededDays: exceededDays,
             dates: {} // Populating this might require more columns if needed
           });
