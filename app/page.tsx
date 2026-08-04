@@ -28,203 +28,147 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchData() {
-      // Fetch main data
-      const allTemplateData = await getSheetData(SHEET_ID, 'Template');
-      const templateData = allTemplateData.slice(213);
-      
-      // Build mapping for latestStep
-      const stepMap = new Map<string, string>();
-      templateData.forEach((row: any) => {
-        const id = row[0]; // Col A (Index 0)
-        const step = row[12]; // Col M (Index 12)
-        if (id) {
-          stepMap.set(id, step || '-');
-        }
-      });
-      
-      // Fetch additional data
-      const allDashboardData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard');
-      const dashboardData = allDashboardData.slice(1);
-      
-      const allAdditionalData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard PC');
-      // Assuming headers in row 0, data starts from row 1
-      const additionalData = allAdditionalData.slice(1);
-      
-      const parseSheetDate = (dateStr: any) => {
-        if (!dateStr || typeof dateStr !== 'string') return null;
+      try {
+        console.log('Fetching Template data...');
+        const allTemplateData = await getSheetData(SHEET_ID, 'Template');
+        console.log('Template Data (Headers):', allTemplateData[0]);
+        console.log('Template Data (Sample Row 1):', allTemplateData[1]);
         
-        // Handle 'Date(y,m,d)' format
-        const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
-        if (match) return `${match[1]}-${(parseInt(match[2]) + 1).toString().padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-        
-        // Handle 'DD/MM/YYYY' format
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-          const day = parts[0].padStart(2, '0');
-          const month = parts[1].padStart(2, '0');
-          const year = parts[2];
-          return `${year}-${month}-${day}`;
+        if (!allTemplateData || allTemplateData.length <= 1) {
+          console.warn('Template data too short or invalid');
+          return;
         }
-        return null;
-      };
-
-      let dailyCasesCount = 0;
-      let dailyAmountSum = 0;
-      let accumulatedCasesCount = 0;
-      let accumulatedAmountSum = 0;
-
-      const selectedDateObj = new Date(selectedDate);
-      const selectedMonth = selectedDateObj.getMonth();
-      const selectedYear = selectedDateObj.getFullYear();
-
-      templateData.forEach((row: any) => {
-        const rowDateStr = parseSheetDate(row[14]); // Col O (Index 14)
+        const templateData = allTemplateData.slice(1);
         
-        if (rowDateStr) {
-          const rowDate = new Date(rowDateStr);
-          const amount = parseFloat(row[34]) || 0; // Col AI (Index 34)
-          
-          // Daily check
-          if (rowDateStr === selectedDate) {
-            dailyCasesCount += 1;
-            dailyAmountSum += amount;
+        const stepMap = new Map<string, string>();
+        templateData.forEach((row: any) => {
+          if (row && Array.isArray(row)) {
+            const id = row[0]; 
+            const step = row[12]; 
+            if (id) stepMap.set(id, step || '-');
           }
-
-          // Monthly accumulated check
-          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            accumulatedCasesCount += 1;
-            accumulatedAmountSum += amount;
-          }
-        }
-      });
+        });
+        
+        console.log('Fetching Dashboard data...');
+        const allDashboardData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard');
+        const dashboardData = allDashboardData && allDashboardData.length > 1 ? allDashboardData.slice(1) : [];
+        
+        console.log('Fetching Additional data...');
+        const allAdditionalData = await getSheetData(ADDITIONAL_SHEET_ID, 'Dashboard PC');
+        const additionalData = allAdditionalData && allAdditionalData.length > 1 ? allAdditionalData.slice(1) : [];
       
-      let dailyAdditionalSum = 0;
-      let accumulatedAdditionalSum = 0;
+        const parseSheetDate = (dateStr: any) => {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+            if (match) return `${match[1]}-${(parseInt(match[2]) + 1).toString().padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            return null;
+        };
 
-      additionalData.forEach((row: any) => {
-        const rowDateStr = parseSheetDate(row[1]); // Col B (Index 1)
-        
-        if (rowDateStr) {
-          const rowDate = new Date(rowDateStr);
-          const amount = parseFloat(row[12]) || 0; // Col M (Index 12)
-          
-          // Daily check
-          if (rowDateStr === selectedDate) {
-            dailyAdditionalSum += amount;
-          }
+        let dailyCasesCount = 0, dailyAmountSum = 0, dailyAdditionalSum = 0;
+        let accumulatedCasesCount = 0, accumulatedAmountSum = 0, accumulatedAdditionalSum = 0;
+        let todayCasesReceivedCount = 0, accumulatedAmountReceivedSum = 0, accumulatedIncomeSum = 0, pendingAmountSum = 0;
+        let overdueCasesList: any[] = [];
+        let monthlyReceivedCasesCount = 0, monthlyFeeIncomeSum = 0, monthlyFeeIncomeCount = 0;
+        let riderMileageMap: { [key: string]: number } = { "ตุ๋ย": 0, "พี": 0 };
 
-          // Monthly accumulated check
-          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            accumulatedAdditionalSum += amount;
-          }
-        }
-      });
+        const selectedDateObj = new Date(selectedDate);
+        const selectedMonth = selectedDateObj.getMonth();
+        const selectedYear = selectedDateObj.getFullYear();
 
-      let todayCasesReceivedCount = 0;
-      let accumulatedAmountReceivedSum = 0;
-      let accumulatedIncomeSum = 0;
-      let pendingAmountSum = 0;
-      let overdueCasesList: any[] = [];
-      
-      let monthlyReceivedCasesCount = 0;
-      let monthlyFeeIncomeSum = 0;
-      let monthlyFeeIncomeCount = 0;
-      let riderMileageMap: { [key: string]: number } = {};
+        templateData.forEach((row: any) => {
+            if (!row || !Array.isArray(row)) return;
+            const rowDateStr = parseSheetDate(row[14]);
+            // Robust parsing: remove commas and other non-numeric chars except decimal point
+            const amountStr = String(row[34] || '0').replace(/[^0-9.-]+/g, '');
+            const amount = parseFloat(amountStr) || 0;
 
-      // Monthly Analytics date range calculation (Dynamic 26th to 25th)
-      const day = selectedDateObj.getDate();
-      let startDate, endDate;
-      if (day >= 26) {
-        startDate = new Date(selectedYear, selectedMonth, 26);
-        endDate = new Date(selectedYear, selectedMonth + 1, 25);
-      } else {
-        startDate = new Date(selectedYear, selectedMonth - 1, 26);
-        endDate = new Date(selectedYear, selectedMonth, 25);
-      }
-      
-      dashboardData.forEach((row: any) => {
-        // Pending check (check if Col N (Index 13) is empty)
-        if (!row[13]) {
-          const pending = parseFloat(row[11]) || 0; // Col L (Index 11)
-          pendingAmountSum += pending;
-        }
-
-        // Overdue check
-        const type = row[4]; // Col E (Index 4)
-        const exceededDays = parseFloat(row[19]) || 0; // Col T (Index 19)
-        const idName = row[2]; // Col C (Index 2)
-        
-        // Use stepMap to get the latest step
-        const latestStep = stepMap.get(row[1]) || type; // Lookup by ID from Col B (Index 1)
-
-        if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
-          overdueCasesList.push({
-            id: row[1], // Col B (Index 1)
-            name: row[2], // Col C (Index 2)
-            latestStep: latestStep, 
-            exceededDays: exceededDays,
-            dates: {}
-          });
-        }
-
-        const rowDateStr = parseSheetDate(row[12]); // Col M (Index 12)
-        
-        if (rowDateStr) {
-          const rowDate = new Date(rowDateStr);
-          const amountReceived = parseFloat(row[13]) || 0; // Col N (Index 13)
-          const income = parseFloat(row[15]) || 0; // Col P (Index 15)
-          const rider = row[20]; // Assuming Col U (Index 20) is Rider Name
-          const mileage = parseFloat(row[21]) || 0; // Assuming Col V (Index 21) is Mileage
-          
-          // Daily check
-          if (rowDateStr === selectedDate) {
-            todayCasesReceivedCount += 1;
-          }
-
-          // Monthly accumulated check (Calendar month)
-          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            accumulatedAmountReceivedSum += amountReceived;
-            accumulatedIncomeSum += income;
-          }
-
-          // Monthly Analytics sliding window check (26th prev - 25th current)
-          if (rowDate >= startDate && rowDate <= endDate) {
-            if (row[13]) monthlyReceivedCasesCount += 1; // Assuming Col N indicates received
-            
-            // Fee Income: Sum Col I (Index 8) - (count * 1000)
-            const fee = parseFloat(row[8]) || 0;
-            monthlyFeeIncomeSum += fee;
-            monthlyFeeIncomeCount += 1; // Count rows for the subtraction
-          }
-          
-          // Monthly Analytics (Calendar month for income/mileage as before)
-          if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
-            if (rider) {
-              riderMileageMap[rider] = (riderMileageMap[rider] || 0) + mileage;
+            if (rowDateStr) {
+                // Debug log
+                console.log(`[Debug] Row Date: ${rowDateStr}, Amount: ${amount}, Selected Date: ${selectedDate}`);
+                
+                const rowDate = new Date(rowDateStr);
+                if (rowDateStr === selectedDate) {
+                    dailyCasesCount += 1; dailyAmountSum += amount;
+                }
+                if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+                    accumulatedCasesCount += 1; accumulatedAmountSum += amount;
+                }
             }
-          }
-        }
-      });
-      
-      const finalMonthlyFeeIncome = monthlyFeeIncomeSum - (monthlyFeeIncomeCount * 1000);
-      
-      setDailyCases(dailyCasesCount);
-      setDailyAmount(dailyAmountSum);
-      setDailyAdditional(dailyAdditionalSum);
-      setAccumulatedCases(accumulatedCasesCount);
-      setAccumulatedAmount(accumulatedAmountSum);
-      setAccumulatedAdditional(accumulatedAdditionalSum);
-      setTodayCasesReceived(todayCasesReceivedCount);
-      setAccumulatedAmountReceived(accumulatedAmountReceivedSum);
-      setAccumulatedIncome(accumulatedIncomeSum);
-      setPendingAmount(pendingAmountSum);
-      setOverdueCases(overdueCasesList);
-      
-      setMonthlyReceivedCases(monthlyReceivedCasesCount);
-      setMonthlyFeeIncome(finalMonthlyFeeIncome);
-      setRiderMileage(riderMileageMap);
-    }
+        });
+        
+        additionalData.forEach((row: any) => {
+            if (!row || !Array.isArray(row)) return;
+            const rowDateStr = parseSheetDate(row[1]);
+            if (rowDateStr) {
+                const rowDate = new Date(rowDateStr);
+                const amount = parseFloat(row[12]) || 0;
+                if (rowDateStr === selectedDate) dailyAdditionalSum += amount;
+                if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) accumulatedAdditionalSum += amount;
+            }
+        });
 
+        // Monthly Analytics date range
+        const day = selectedDateObj.getDate();
+        let startDate, endDate;
+        if (day >= 26) {
+            startDate = new Date(selectedYear, selectedMonth, 26);
+            endDate = new Date(selectedYear, selectedMonth + 1, 25);
+        } else {
+            startDate = new Date(selectedYear, selectedMonth - 1, 26);
+            endDate = new Date(selectedYear, selectedMonth, 25);
+        }
+
+        dashboardData.forEach((row: any) => {
+            if (!row || !Array.isArray(row)) return;
+            if (!row[13]) pendingAmountSum += parseFloat(row[11]) || 0;
+            
+            const type = row[4], exceededDays = parseFloat(row[19]) || 0;
+            const latestStep = stepMap.get(row[1]) || type;
+            if ((type === 'จำนำ' && exceededDays > 10) || (type === 'HP' && exceededDays > 20)) {
+                overdueCasesList.push({ id: row[1], name: row[2], latestStep, exceededDays, dates: {} });
+            }
+
+            const rowDateStr = parseSheetDate(row[12]);
+            if (rowDateStr) {
+                const rowDate = new Date(rowDateStr);
+                if (rowDateStr === selectedDate) todayCasesReceivedCount += 1;
+                if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+                    accumulatedAmountReceivedSum += parseFloat(row[13]) || 0;
+                    accumulatedIncomeSum += parseFloat(row[15]) || 0;
+                }
+                if (rowDate >= startDate && rowDate <= endDate) {
+                    if (row[13]) monthlyReceivedCasesCount += 1;
+                    monthlyFeeIncomeSum += parseFloat(row[8]) || 0;
+                    monthlyFeeIncomeCount += 1;
+                }
+                if (rowDate.getMonth() === selectedMonth && rowDate.getFullYear() === selectedYear) {
+                    const rider = row[20], mileage = parseFloat(row[21]) || 0;
+                    if (rider) riderMileageMap[rider] = (riderMileageMap[rider] || 0) + mileage;
+                }
+            }
+        });
+        
+        setDailyCases(dailyCasesCount);
+        setDailyAmount(dailyAmountSum);
+        setDailyAdditional(dailyAdditionalSum);
+        setAccumulatedCases(accumulatedCasesCount);
+        setAccumulatedAmount(accumulatedAmountSum);
+        setAccumulatedAdditional(accumulatedAdditionalSum);
+        setTodayCasesReceived(todayCasesReceivedCount);
+        setAccumulatedAmountReceived(accumulatedAmountReceivedSum);
+        setAccumulatedIncome(accumulatedIncomeSum);
+        setPendingAmount(pendingAmountSum);
+        setOverdueCases(overdueCasesList);
+        setMonthlyReceivedCases(monthlyReceivedCasesCount);
+        setMonthlyFeeIncome(monthlyFeeIncomeSum - (monthlyFeeIncomeCount * 1000));
+        setRiderMileage(riderMileageMap);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
     fetchData();
   }, [selectedDate]);
 
